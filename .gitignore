@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Cache
+.cache/
+.pytest_cache/
+
+# Database
+*.db
+*.sqlite
+data/
+
+# ML models
+models/*.pkl
+models/*.h5
+models/*.joblib
+
+# API keys (for development)
+keys/
+credentials/
+
+# Testing
+coverage/
+.coverage
+htmlcov/
+
+# OS
+Thumbs.db
+.DS_Store
