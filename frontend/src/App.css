@@ -5,6 +5,7 @@
 
 main {
   max-width: 1200px;
+  margin: 0 auto;
 }
 
 /* Scrollbar styling */
@@ -24,4 +25,41 @@ main {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* Mobile-first responsive utilities */
+@media (max-width: 640px) {
+  main {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  h1 {
+    font-size: 1.5rem !important;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+  }
+
+  h3 {
+    font-size: 1.1rem !important;
+  }
+}
+
+/* Hide tables on mobile, show cards instead */
+@media (max-width: 768px) {
+  table {
+    display: none;
+  }
+
+  .card-view {
+    display: block;
+  }
+}
+
+@media (min-width: 769px) {
+  .card-view {
+    display: none;
+  }
 }

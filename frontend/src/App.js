@@ -44,7 +44,7 @@ function App() {
       <Router>
         <div className="App">
           {localStorage.getItem("demoAccess") === "true" && <Navbar />}
-          <main className="container mx-auto px-4 py-8">
+          <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-7xl">
             <Routes>
               <Route path="/demo-access" element={<DemoAccess />} />
 
