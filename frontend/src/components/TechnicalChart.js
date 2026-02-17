@@ -331,20 +331,22 @@ const TechnicalChart = ({ symbol, data }) => {
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Price Chart (30 Days)</h3>
-        <div className="flex flex-wrap gap-2 items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+        <h3 className="text-base sm:text-lg font-semibold">
+          Price Chart (30 Days)
+        </h3>
+        <div className="flex flex-wrap gap-1 sm:gap-2 items-center text-xs sm:text-sm">
           <button
             onClick={() => setChartType("line")}
-            className={`px-3 py-1 rounded ${chartType === "line" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+            className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${chartType === "line" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
           >
             Line
           </button>
           <button
             onClick={() => setChartType("candlestick")}
-            className={`px-3 py-1 rounded ${chartType === "candlestick" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+            className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${chartType === "candlestick" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
           >
-            Candlestick
+            Candle
           </button>
           <label className="flex items-center gap-2 text-xs text-gray-600">
             <input
@@ -414,7 +416,7 @@ const TechnicalChart = ({ symbol, data }) => {
         </div>
       </div>
 
-      <div className="relative w-full h-80 bg-white border border-gray-200 rounded-lg p-4">
+      <div className="relative w-full h-64 sm:h-80 bg-white border border-gray-200 rounded-lg p-2 sm:p-4">
         {chartType === "line" ? (
           <Line
             data={lineData}
@@ -469,28 +471,28 @@ const TechnicalChart = ({ symbol, data }) => {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-4 gap-4 mt-4">
-        <div className="bg-gray-50 p-3 rounded">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mt-4">
+        <div className="bg-gray-50 p-2 sm:p-3 rounded">
           <p className="text-xs text-gray-600">Open</p>
-          <p className="font-semibold">
+          <p className="font-semibold text-sm sm:text-base">
             ${historicalData[historicalData.length - 1]?.open.toFixed(2)}
           </p>
         </div>
-        <div className="bg-gray-50 p-3 rounded">
+        <div className="bg-gray-50 p-2 sm:p-3 rounded">
           <p className="text-xs text-gray-600">High</p>
-          <p className="font-semibold">
+          <p className="font-semibold text-sm sm:text-base">
             ${historicalData[historicalData.length - 1]?.high.toFixed(2)}
           </p>
         </div>
-        <div className="bg-gray-50 p-3 rounded">
+        <div className="bg-gray-50 p-2 sm:p-3 rounded">
           <p className="text-xs text-gray-600">Low</p>
-          <p className="font-semibold">
+          <p className="font-semibold text-sm sm:text-base">
             ${historicalData[historicalData.length - 1]?.low.toFixed(2)}
           </p>
         </div>
-        <div className="bg-gray-50 p-3 rounded">
+        <div className="bg-gray-50 p-2 sm:p-3 rounded">
           <p className="text-xs text-gray-600">Close</p>
-          <p className="font-semibold">
+          <p className="font-semibold text-sm sm:text-base">
             ${historicalData[historicalData.length - 1]?.close.toFixed(2)}
           </p>
         </div>

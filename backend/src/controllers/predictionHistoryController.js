@@ -3,6 +3,7 @@ const {
   logPrediction,
   getAccuracyStats,
   updatePredictionOutcomes,
+  seedHistoricalPredictions,
 } = require("../services/predictionService");
 
 exports.getPredictions = async (req, res) => {
@@ -82,5 +83,16 @@ exports.updateOutcomes = async (req, res) => {
   } catch (error) {
     console.error("Error updating outcomes:", error);
     res.status(500).json({ error: "Failed to update outcomes" });
+  }
+};
+
+exports.seedHistorical = async (req, res) => {
+  try {
+    const { symbols } = req.body;
+    const result = await seedHistoricalPredictions(symbols);
+    res.json(result);
+  } catch (error) {
+    console.error("Error seeding historical predictions:", error);
+    res.status(500).json({ error: "Failed to seed historical predictions" });
   }
 };

@@ -23,5 +23,6 @@ router.post(
   "/history/update-outcomes",
   predictionHistoryController.updateOutcomes,
 );
+router.post("/history/seed", predictionHistoryController.seedHistorical);
 
 module.exports = router;
