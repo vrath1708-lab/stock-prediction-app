@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import useLiveStream from "./useLiveStream";
 
 const useLiveRefresh = (
   callback,
@@ -7,6 +8,9 @@ const useLiveRefresh = (
     enabled = true,
     runOnMount = true,
     revalidateOnFocus = true,
+    useServerPush = true,
+    streamInclude = ["heartbeat"],
+    streamSymbol,
   } = {},
 ) => {
   const callbackRef = useRef(callback);
@@ -69,10 +73,23 @@ const useLiveRefresh = (
     };
   }, [enabled, intervalMs, refreshNow, revalidateOnFocus, runOnMount]);
 
+  const { connected: streamConnected, lastEventAt } = useLiveStream({
+    enabled: enabled && useServerPush,
+    include: streamInclude,
+    symbol: streamSymbol,
+    onUpdate: () => {
+      if (!document.hidden) {
+        refreshNow();
+      }
+    },
+  });
+
   return {
     lastUpdated,
     refreshing,
     refreshNow,
+    streamConnected,
+    lastStreamEventAt: lastEventAt,
   };
 };
 

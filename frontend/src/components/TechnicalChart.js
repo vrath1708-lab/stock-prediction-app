@@ -67,6 +67,8 @@ const TechnicalChart = ({ symbol, data }) => {
     intervalMs: 20000,
     enabled: Boolean(symbol),
     runOnMount: true,
+    streamInclude: ["heartbeat", "analysis"],
+    streamSymbol: symbol,
   });
 
   const chartLabels = useMemo(

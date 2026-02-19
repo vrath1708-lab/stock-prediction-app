@@ -11,6 +11,7 @@ const authRoutes = require("./routes/auth");
 const portfolioRoutes = require("./routes/portfolio");
 const backtestRoutes = require("./routes/backtest");
 const alertRoutes = require("./routes/alerts");
+const liveRoutes = require("./routes/live");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -30,6 +31,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/portfolio", portfolioRoutes);
 app.use("/api/backtest", backtestRoutes);
 app.use("/api/alerts", alertRoutes);
+app.use("/api/live", liveRoutes);
 
 // Health check
 app.get("/health", (req, res) => {

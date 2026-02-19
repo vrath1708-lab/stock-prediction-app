@@ -38,6 +38,7 @@ const Predictions = () => {
     intervalMs: 20000,
     enabled: true,
     runOnMount: true,
+    streamInclude: ["heartbeat", "stocks"],
   });
 
   const getPredictionBySymbol = (symbol) => {

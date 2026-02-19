@@ -51,6 +51,7 @@ const Dashboard = () => {
     intervalMs: 20000,
     enabled: liveRefreshEnabled,
     runOnMount: true,
+    streamInclude: ["heartbeat", "stocks"],
   });
 
   const filteredStocks = stocks.filter((stock) =>
