@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { stockService } from "../services/api";
+import useLiveRefresh from "../hooks/useLiveRefresh";
 
 const PAGE_SIZE = 10;
 
@@ -67,6 +68,15 @@ const SymbolBrowser = () => {
     setPage(1);
   }, [query, filters.region, filters.type, filters.currency]);
 
+  const { lastUpdated, refreshing } = useLiveRefresh(
+    () => searchSymbols(query),
+    {
+      intervalMs: 30000,
+      enabled: query.trim().length >= 2,
+      runOnMount: false,
+    },
+  );
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const handlePrevious = () => {
@@ -100,6 +110,13 @@ const SymbolBrowser = () => {
         <p className="text-xs text-gray-500 mt-2">
           Results are powered by {source} (cached for 60 seconds).
         </p>
+        {query.trim().length >= 2 && (
+          <p className="text-xs text-gray-500 mt-1">
+            Last updated:{" "}
+            {lastUpdated ? lastUpdated.toLocaleTimeString() : "Waiting..."}
+            {refreshing ? " • Updating" : ""}
+          </p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
           <input
             type="text"

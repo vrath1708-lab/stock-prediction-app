@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { stockService } from "../services/api";
+import useLiveRefresh from "../hooks/useLiveRefresh";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -28,22 +29,29 @@ const Dashboard = () => {
     signalValue: "BUY",
   });
 
-  useEffect(() => {
-    fetchStocks();
-  }, []);
-
-  const fetchStocks = async () => {
+  const fetchStocks = useCallback(async (showLoader = true) => {
     try {
-      setLoading(true);
+      if (showLoader) {
+        setLoading(true);
+      }
       setSearchError("");
       const data = await stockService.getTopStocks();
       setStocks(data);
     } catch (error) {
       console.error("Error fetching stocks:", error);
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
-  };
+  }, []);
+
+  const liveRefreshEnabled = searchQuery.trim().length === 0;
+  const { lastUpdated, refreshing } = useLiveRefresh(() => fetchStocks(false), {
+    intervalMs: 20000,
+    enabled: liveRefreshEnabled,
+    runOnMount: true,
+  });
 
   const filteredStocks = stocks.filter((stock) =>
     stock.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -91,7 +99,7 @@ const Dashboard = () => {
   const handleSearch = async (selectedSymbol) => {
     const query = (selectedSymbol || searchQuery).trim().toUpperCase();
     if (!query) {
-      return fetchStocks();
+      return fetchStocks(true);
     }
 
     try {
@@ -149,6 +157,11 @@ const Dashboard = () => {
             </h1>
             <p className="text-blue-100">
               Near real-time technical analysis and AI-driven predictions
+            </p>
+            <p className="text-blue-100 text-sm mt-2">
+              Last updated:{" "}
+              {lastUpdated ? lastUpdated.toLocaleTimeString() : "Syncing..."}
+              {refreshing ? " • Updating" : ""}
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm text-blue-100">

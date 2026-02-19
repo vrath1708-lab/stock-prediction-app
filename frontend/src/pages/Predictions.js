@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { stockService } from "../services/api";
+import useLiveRefresh from "../hooks/useLiveRefresh";
 
 const Predictions = () => {
   const navigate = useNavigate();
@@ -9,9 +10,11 @@ const Predictions = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStock, setSelectedStock] = useState(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (showLoader = true) => {
     try {
-      setLoading(true);
+      if (showLoader) {
+        setLoading(true);
+      }
       const stocksData = await stockService.getTopStocks();
       setStocks(stocksData);
 
@@ -25,13 +28,17 @@ const Predictions = () => {
     } catch (error) {
       console.error("Error fetching predictions:", error);
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { lastUpdated, refreshing } = useLiveRefresh(() => fetchData(false), {
+    intervalMs: 20000,
+    enabled: true,
+    runOnMount: true,
+  });
 
   const getPredictionBySymbol = (symbol) => {
     return predictions.find((p) => p.symbol === symbol);
@@ -61,6 +68,11 @@ const Predictions = () => {
         <h1 className="text-4xl font-bold mb-2">AI Stock Predictions</h1>
         <p className="text-purple-100">
           Machine learning-powered buy and sell recommendations
+        </p>
+        <p className="text-purple-100 text-sm mt-2">
+          Last updated:{" "}
+          {lastUpdated ? lastUpdated.toLocaleTimeString() : "Syncing..."}
+          {refreshing ? " • Updating" : ""}
         </p>
       </div>
 

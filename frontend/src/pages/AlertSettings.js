@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { stockService } from "../services/api";
+import useLiveRefresh from "../hooks/useLiveRefresh";
 
 const AlertSettings = () => {
   const [settings, setSettings] = useState(null);
@@ -9,25 +10,37 @@ const AlertSettings = () => {
   const [activeTab, setActiveTab] = useState("settings");
 
   useEffect(() => {
-    fetchSettings();
     // Request notification permission on mount
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
   }, []);
 
-  const fetchSettings = async () => {
+  const fetchSettings = async (showLoader = true) => {
     try {
-      setLoading(true);
+      if (showLoader) {
+        setLoading(true);
+      }
       const data = await stockService.getAlertSettings();
       setSettings(data);
     } catch (error) {
       console.error("Error fetching alert settings:", error);
       setMessage("Failed to load alert settings");
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
   };
+
+  const { lastUpdated, refreshing } = useLiveRefresh(
+    () => fetchSettings(false),
+    {
+      intervalMs: 30000,
+      enabled: true,
+      runOnMount: true,
+    },
+  );
 
   const handleToggle = (field) => {
     setSettings((prev) => ({
@@ -118,6 +131,11 @@ const AlertSettings = () => {
         <h1 className="text-4xl font-bold mb-2">Alert Management</h1>
         <p className="text-orange-100">
           Configure notifications for trading signals
+        </p>
+        <p className="text-orange-100 text-sm mt-2">
+          Last updated:{" "}
+          {lastUpdated ? lastUpdated.toLocaleTimeString() : "Syncing..."}
+          {refreshing ? " • Updating" : ""}
         </p>
       </div>
 

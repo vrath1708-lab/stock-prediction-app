@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { stockService } from "../services/api";
+import useLiveRefresh from "../hooks/useLiveRefresh";
 
 const Portfolio = () => {
   const navigate = useNavigate();
@@ -11,15 +12,19 @@ const Portfolio = () => {
   const [portfolioError, setPortfolioError] = useState("");
   const isAuthed = Boolean(localStorage.getItem("authToken"));
 
-  const fetchRecommendations = useCallback(async () => {
+  const fetchRecommendations = useCallback(async (showLoader = true) => {
     try {
-      setLoading(true);
+      if (showLoader) {
+        setLoading(true);
+      }
       const data = await stockService.getPortfolioRecommendations();
       setRecommendations(data);
     } catch (error) {
       console.error("Error fetching recommendations:", error);
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -34,15 +39,19 @@ const Portfolio = () => {
     }
   }, []);
 
-  useEffect(() => {
-    fetchRecommendations();
-  }, [fetchRecommendations]);
-
-  useEffect(() => {
-    if (isAuthed) {
-      fetchPortfolio();
-    }
-  }, [fetchPortfolio, isAuthed]);
+  const { lastUpdated, refreshing } = useLiveRefresh(
+    async () => {
+      await fetchRecommendations(false);
+      if (isAuthed) {
+        await fetchPortfolio();
+      }
+    },
+    {
+      intervalMs: 25000,
+      enabled: true,
+      runOnMount: true,
+    },
+  );
 
   const handleTrade = async (event) => {
     event.preventDefault();
@@ -106,6 +115,11 @@ const Portfolio = () => {
         <h1 className="text-4xl font-bold mb-2">Portfolio Management</h1>
         <p className="text-indigo-100">
           AI-powered recommendations for your investment portfolio
+        </p>
+        <p className="text-indigo-100 text-sm mt-2">
+          Last updated:{" "}
+          {lastUpdated ? lastUpdated.toLocaleTimeString() : "Syncing..."}
+          {refreshing ? " • Updating" : ""}
         </p>
       </div>
 

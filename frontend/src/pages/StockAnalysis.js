@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { stockService } from "../services/api";
 import TechnicalChart from "../components/TechnicalChart";
+import useLiveRefresh from "../hooks/useLiveRefresh";
 
 const StockAnalysis = () => {
   const { symbol } = useParams();
@@ -11,17 +12,24 @@ const StockAnalysis = () => {
   const [newsSummary, setNewsSummary] = useState(null);
   const [newsSource, setNewsSource] = useState("");
 
-  const fetchAnalysis = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await stockService.getTechnicalAnalysis(symbol);
-      setAnalysis(data);
-    } catch (error) {
-      console.error("Error fetching analysis:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [symbol]);
+  const fetchAnalysis = useCallback(
+    async (showLoader = true) => {
+      try {
+        if (showLoader) {
+          setLoading(true);
+        }
+        const data = await stockService.getTechnicalAnalysis(symbol);
+        setAnalysis(data);
+      } catch (error) {
+        console.error("Error fetching analysis:", error);
+      } finally {
+        if (showLoader) {
+          setLoading(false);
+        }
+      }
+    },
+    [symbol],
+  );
 
   const fetchNews = useCallback(async () => {
     try {
@@ -34,20 +42,30 @@ const StockAnalysis = () => {
     }
   }, [symbol]);
 
-  useEffect(() => {
-    fetchAnalysis();
-  }, [fetchAnalysis]);
-
-  useEffect(() => {
-    fetchNews();
-  }, [fetchNews]);
+  const { lastUpdated, refreshing } = useLiveRefresh(
+    async () => {
+      await Promise.all([fetchAnalysis(false), fetchNews()]);
+    },
+    {
+      intervalMs: 20000,
+      enabled: Boolean(symbol),
+      runOnMount: true,
+    },
+  );
 
   if (loading)
     return <div className="text-center py-12">Loading analysis...</div>;
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">{symbol} Technical Analysis</h1>
+      <div>
+        <h1 className="text-3xl font-bold">{symbol} Technical Analysis</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Last updated:{" "}
+          {lastUpdated ? lastUpdated.toLocaleTimeString() : "Syncing..."}
+          {refreshing ? " • Updating" : ""}
+        </p>
+      </div>
 
       {/* Technical Indicators */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

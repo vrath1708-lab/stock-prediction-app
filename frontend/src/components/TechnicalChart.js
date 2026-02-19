@@ -19,6 +19,7 @@ import "chartjs-adapter-date-fns";
 import { Line } from "react-chartjs-2";
 import { createChart } from "lightweight-charts";
 import { stockService } from "../services/api";
+import useLiveRefresh from "../hooks/useLiveRefresh";
 
 ChartJS.register(
   LineElement,
@@ -43,21 +44,30 @@ const TechnicalChart = ({ symbol, data }) => {
   });
   const candleContainerRef = useRef(null);
 
-  const fetchHistoricalData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const history = await stockService.getHistoricalData(symbol, 30);
-      setHistoricalData(history);
-    } catch (error) {
-      console.error("Error fetching historical data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [symbol]);
+  const fetchHistoricalData = useCallback(
+    async (showLoader = true) => {
+      try {
+        if (showLoader) {
+          setLoading(true);
+        }
+        const history = await stockService.getHistoricalData(symbol, 30);
+        setHistoricalData(history);
+      } catch (error) {
+        console.error("Error fetching historical data:", error);
+      } finally {
+        if (showLoader) {
+          setLoading(false);
+        }
+      }
+    },
+    [symbol],
+  );
 
-  useEffect(() => {
-    fetchHistoricalData();
-  }, [fetchHistoricalData]);
+  useLiveRefresh(() => fetchHistoricalData(false), {
+    intervalMs: 20000,
+    enabled: Boolean(symbol),
+    runOnMount: true,
+  });
 
   const chartLabels = useMemo(
     () => historicalData.map((d) => d.date),

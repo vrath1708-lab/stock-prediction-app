@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { stockService } from "../services/api";
+import useLiveRefresh from "../hooks/useLiveRefresh";
 
 const PredictionHistory = () => {
   const [predictions, setPredictions] = useState([]);
@@ -7,15 +8,11 @@ const PredictionHistory = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("stats");
 
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = async (showLoader = true) => {
     try {
-      setLoading(true);
+      if (showLoader) {
+        setLoading(true);
+      }
       const [predictionsData, statsData] = await Promise.all([
         stockService.getPredictionHistory(),
         stockService.getPredictionStats(),
@@ -25,9 +22,17 @@ const PredictionHistory = () => {
     } catch (error) {
       console.error("Error fetching prediction data:", error);
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
   };
+
+  const { lastUpdated, refreshing } = useLiveRefresh(() => fetchData(false), {
+    intervalMs: 20000,
+    enabled: true,
+    runOnMount: true,
+  });
 
   if (loading) {
     return (
@@ -44,6 +49,11 @@ const PredictionHistory = () => {
         <h1 className="text-4xl font-bold mb-2">Prediction Tracker</h1>
         <p className="text-purple-100">
           Monitor prediction accuracy and performance over time
+        </p>
+        <p className="text-purple-100 text-sm mt-2">
+          Last updated:{" "}
+          {lastUpdated ? lastUpdated.toLocaleTimeString() : "Syncing..."}
+          {refreshing ? " • Updating" : ""}
         </p>
       </div>
 
