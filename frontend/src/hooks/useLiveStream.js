@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE_URL } from "../services/api";
 
 const useLiveStream = ({
@@ -10,6 +10,10 @@ const useLiveStream = ({
   const [connected, setConnected] = useState(false);
   const [lastEventAt, setLastEventAt] = useState(null);
   const onUpdateRef = useRef(onUpdate);
+  const includeKey = useMemo(
+    () => (Array.isArray(include) ? include.join(",") : "heartbeat"),
+    [include],
+  );
 
   useEffect(() => {
     onUpdateRef.current = onUpdate;
@@ -17,8 +21,6 @@ const useLiveStream = ({
 
   useEffect(() => {
     if (!enabled) return undefined;
-
-    const includeKey = Array.isArray(include) ? include.join(",") : "heartbeat";
 
     const params = new URLSearchParams();
     if (includeKey.length) {
@@ -60,7 +62,7 @@ const useLiveStream = ({
       eventSource.close();
       setConnected(false);
     };
-  }, [enabled, symbol, Array.isArray(include) ? include.join(",") : "heartbeat"]);
+  }, [enabled, symbol, includeKey]);
 
   return {
     connected,
