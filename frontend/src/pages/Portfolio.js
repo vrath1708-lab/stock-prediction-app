@@ -22,9 +22,7 @@ const Portfolio = () => {
     } catch (error) {
       console.error("Error fetching recommendations:", error);
     } finally {
-      if (showLoader) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, []);
 

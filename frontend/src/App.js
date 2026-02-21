@@ -39,9 +39,21 @@ function App() {
     setIsDemoMode(true); // Enable demo mode by default
   }, []);
 
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    const isDark = savedTheme === "dark";
+    document.documentElement.classList.toggle("dark", isDark);
+    document.body.classList.toggle("dark", isDark);
+  }, []);
+
   return (
     <Provider store={store}>
-      <Router>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <div className="App">
           {localStorage.getItem("demoAccess") === "true" && <Navbar />}
           <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-7xl">

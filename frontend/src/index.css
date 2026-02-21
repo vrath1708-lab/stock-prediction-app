@@ -16,6 +16,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html.dark body {
+  background-color: #030712;
+  color: #e5e7eb;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
@@ -54,4 +59,86 @@ code {
 
 .btn-danger {
   @apply bg-red-500 text-white hover:bg-red-600;
+}
+
+html.dark .bg-white {
+  background-color: #111827 !important;
+}
+
+html.dark .bg-gray-50,
+html.dark .bg-gray-100 {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-gray-200,
+html.dark .bg-gray-300 {
+  background-color: #374151 !important;
+}
+
+html.dark .bg-blue-50 {
+  background-color: #1e293b !important;
+}
+
+html.dark .bg-green-50 {
+  background-color: #172c22 !important;
+}
+
+html.dark .bg-yellow-50 {
+  background-color: #2f271a !important;
+}
+
+html.dark .bg-red-50 {
+  background-color: #3a1e1e !important;
+}
+
+html.dark .text-gray-900 {
+  color: #f9fafb !important;
+}
+
+html.dark .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .text-gray-700,
+html.dark .text-gray-600,
+html.dark .text-gray-500 {
+  color: #d1d5db !important;
+}
+
+html.dark .text-gray-400 {
+  color: #9ca3af !important;
+}
+
+html.dark .text-gray-300 {
+  color: #e5e7eb !important;
+}
+
+html.dark .border,
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-gray-300 {
+  border-color: #374151 !important;
+}
+
+html.dark .border-blue-200,
+html.dark .border-green-200,
+html.dark .border-yellow-200,
+html.dark .border-red-200 {
+  border-color: #4b5563 !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #111827 !important;
+  color: #e5e7eb !important;
+  border-color: #374151 !important;
+}
+
+html.dark table thead {
+  background-color: #1f2937 !important;
+}
+
+html.dark table tbody tr:hover {
+  background-color: #1f2937 !important;
 }

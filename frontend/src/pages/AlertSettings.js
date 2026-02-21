@@ -27,9 +27,7 @@ const AlertSettings = () => {
       console.error("Error fetching alert settings:", error);
       setMessage("Failed to load alert settings");
     } finally {
-      if (showLoader) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 

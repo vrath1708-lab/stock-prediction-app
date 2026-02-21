@@ -3,6 +3,10 @@
   background-color: #f3f4f6;
 }
 
+html.dark .App {
+  background-color: #030712;
+}
+
 main {
   max-width: 1200px;
   margin: 0 auto;
@@ -18,9 +22,17 @@ main {
   background: #f1f1f1;
 }
 
+html.dark ::-webkit-scrollbar-track {
+  background: #111827;
+}
+
 ::-webkit-scrollbar-thumb {
   background: #888;
   border-radius: 5px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
 }
 
 ::-webkit-scrollbar-thumb:hover {

@@ -38,6 +38,33 @@ const normalizeSymbol = (symbol) =>
     .trim()
     .toUpperCase();
 
+const getSymbolSeed = (symbol) =>
+  normalizeSymbol(symbol)
+    .split("")
+    .reduce((seed, char, index) => seed + char.charCodeAt(0) * (index + 1), 0);
+
+const buildSyntheticQuote = (symbol, name = null) => {
+  const normalizedSymbol = normalizeSymbol(symbol);
+  const seed = getSymbolSeed(normalizedSymbol);
+  const basePrice = 40 + (seed % 460);
+  const swing = ((seed % 120) - 60) / 100;
+  const change = Number((swing / 10).toFixed(2));
+  const signal = change >= 1 ? "BUY" : change <= -1 ? "SELL" : "HOLD";
+  const confidence = Math.min(90, Math.max(55, 62 + Math.abs(change) * 8));
+
+  return {
+    symbol: normalizedSymbol,
+    name: name || `${normalizedSymbol} Corp.`,
+    price: Number((basePrice + swing).toFixed(2)),
+    change,
+    signal,
+    confidence: Number(confidence.toFixed(1)),
+    volume: ensureVolume(1500000 + (seed % 9000000)),
+    source: "Synthetic",
+    updatedAt: new Date().toISOString(),
+  };
+};
+
 const getCachedValue = (cache, key, ttlMs) => {
   const entry = cache.get(key);
   if (!entry) return null;
@@ -369,12 +396,18 @@ exports.getStockBySymbol = async (symbol) => {
         return result;
       } catch (error) {
         if (!fallbackStock) {
-          throw error;
+          const synthetic = buildSyntheticQuote(normalizedSymbol);
+          setCachedValue(quoteCache, normalizedSymbol, synthetic);
+          return synthetic;
         }
       }
     }
 
-    if (!fallbackStock) throw new Error("Stock not found");
+    if (!fallbackStock) {
+      const synthetic = buildSyntheticQuote(normalizedSymbol);
+      setCachedValue(quoteCache, normalizedSymbol, synthetic);
+      return synthetic;
+    }
     const fallbackResult = {
       ...fallbackStock,
       volume: ensureVolume(fallbackStock.volume),

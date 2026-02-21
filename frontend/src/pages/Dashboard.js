@@ -40,9 +40,7 @@ const Dashboard = () => {
     } catch (error) {
       console.error("Error fetching stocks:", error);
     } finally {
-      if (showLoader) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, []);
 

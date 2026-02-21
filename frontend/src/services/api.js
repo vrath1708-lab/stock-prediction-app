@@ -88,7 +88,8 @@ export const stockService = {
   getSentiment: (symbol) =>
     api.get(`/sentiment/${symbol}`).then((res) => res.data),
 
-  getNews: (symbol) => api.get(`/news/${symbol}`).then((res) => res.data),
+  getNews: (symbol) =>
+    api.get(`/news/${symbol}`, { timeout: 20000 }).then((res) => res.data),
 
   getPrediction: (symbol) =>
     api.get(`/predictions/${symbol}`).then((res) => res.data),

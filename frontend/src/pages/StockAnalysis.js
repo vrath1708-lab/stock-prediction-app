@@ -23,9 +23,7 @@ const StockAnalysis = () => {
       } catch (error) {
         console.error("Error fetching analysis:", error);
       } finally {
-        if (showLoader) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     },
     [symbol],
@@ -44,7 +42,7 @@ const StockAnalysis = () => {
 
   const { lastUpdated, refreshing } = useLiveRefresh(
     async () => {
-      await Promise.all([fetchAnalysis(false), fetchNews()]);
+      await Promise.allSettled([fetchAnalysis(false), fetchNews()]);
     },
     {
       intervalMs: 20000,

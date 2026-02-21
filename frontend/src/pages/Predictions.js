@@ -28,9 +28,7 @@ const Predictions = () => {
     } catch (error) {
       console.error("Error fetching predictions:", error);
     } finally {
-      if (showLoader) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, []);
 

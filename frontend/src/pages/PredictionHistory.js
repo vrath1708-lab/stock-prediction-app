@@ -1,12 +1,36 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Chart as ChartJS,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
 import { stockService } from "../services/api";
 import useLiveRefresh from "../hooks/useLiveRefresh";
+
+ChartJS.register(
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+);
 
 const PredictionHistory = () => {
   const [predictions, setPredictions] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("stats");
+  const [intradaySymbols, setIntradaySymbols] = useState([]);
+  const [intradayTicks, setIntradayTicks] = useState({});
+  const [intradayLoading, setIntradayLoading] = useState(true);
+  const [intradayError, setIntradayError] = useState("");
+  const [selectedIntradaySymbol, setSelectedIntradaySymbol] = useState("AAPL");
 
   const fetchData = async (showLoader = true) => {
     try {
@@ -22,9 +46,7 @@ const PredictionHistory = () => {
     } catch (error) {
       console.error("Error fetching prediction data:", error);
     } finally {
-      if (showLoader) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
@@ -33,6 +55,118 @@ const PredictionHistory = () => {
     enabled: true,
     runOnMount: true,
   });
+
+  const trackedSymbols = useMemo(() => {
+    const symbolsFromHistory = [...new Set(predictions.map((p) => p.symbol))];
+    const fallback = ["AAPL", "MSFT", "NVDA", "GOOGL", "TSLA"];
+    return [...new Set([...symbolsFromHistory, ...fallback, ...intradaySymbols])];
+  }, [intradaySymbols, predictions]);
+
+  const fetchIntradayUniverse = useCallback(async () => {
+    try {
+      const topStocks = await stockService.getTopStocks();
+      const symbols = (topStocks || []).map((stock) => stock.symbol).filter(Boolean);
+      setIntradaySymbols(symbols);
+    } catch (error) {
+      console.error("Error fetching intraday universe:", error);
+    }
+  }, []);
+
+  const fetchIntradayTicks = useCallback(async () => {
+    if (trackedSymbols.length === 0) return;
+
+    try {
+      setIntradayError("");
+      const results = await Promise.allSettled(
+        trackedSymbols.map((symbol) => stockService.getStockBySymbol(symbol)),
+      );
+
+      const now = new Date();
+      setIntradayTicks((previous) => {
+        const next = { ...previous };
+        results.forEach((result, index) => {
+          if (result.status !== "fulfilled") {
+            return;
+          }
+          const quote = result.value;
+          const symbol = trackedSymbols[index];
+          const point = {
+            ts: now,
+            price: Number(quote?.price || 0),
+            change: Number(quote?.change || 0),
+            volume: Number(quote?.volume || 0),
+            source: quote?.source || "Unknown",
+          };
+          const history = next[symbol] ? [...next[symbol], point] : [point];
+          next[symbol] = history.slice(-60);
+        });
+        return next;
+      });
+    } catch (error) {
+      console.error("Error fetching intraday ticks:", error);
+      setIntradayError("Unable to fetch intraday ticks right now.");
+    } finally {
+      setIntradayLoading(false);
+    }
+  }, [trackedSymbols]);
+
+  const { lastUpdated: intradayUpdated, refreshing: intradayRefreshing } =
+    useLiveRefresh(() => fetchIntradayTicks(), {
+      intervalMs: 15000,
+      enabled: activeTab === "intraday" && trackedSymbols.length > 0,
+      runOnMount: true,
+      useServerPush: false,
+    });
+
+  const selectedPoints = useMemo(
+    () => intradayTicks[selectedIntradaySymbol] || [],
+    [intradayTicks, selectedIntradaySymbol],
+  );
+  const selectedLatest = selectedPoints[selectedPoints.length - 1];
+  const selectedHigh = selectedPoints.length
+    ? Math.max(...selectedPoints.map((point) => point.price))
+    : null;
+  const selectedLow = selectedPoints.length
+    ? Math.min(...selectedPoints.map((point) => point.price))
+    : null;
+
+  const intradayChartData = useMemo(
+    () => ({
+      labels: selectedPoints.map((point) =>
+        point.ts.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
+      ),
+      datasets: [
+        {
+          label: `${selectedIntradaySymbol} Price`,
+          data: selectedPoints.map((point) => point.price),
+          borderColor: "#7c3aed",
+          backgroundColor: "rgba(124, 58, 237, 0.15)",
+          tension: 0.25,
+          pointRadius: 0,
+          fill: true,
+        },
+      ],
+    }),
+    [selectedIntradaySymbol, selectedPoints],
+  );
+
+  useEffect(() => {
+    if (activeTab === "intraday") {
+      setIntradayLoading(true);
+      fetchIntradayUniverse();
+    }
+  }, [activeTab, fetchIntradayUniverse]);
+
+  useEffect(() => {
+    if (trackedSymbols.length === 0) return;
+    if (!trackedSymbols.includes(selectedIntradaySymbol)) {
+      setSelectedIntradaySymbol(trackedSymbols[0]);
+    }
+  }, [selectedIntradaySymbol, trackedSymbols]);
 
   if (loading) {
     return (
@@ -78,6 +212,20 @@ const PredictionHistory = () => {
           }`}
         >
           Prediction History
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("intraday");
+            setIntradayLoading(true);
+            setIntradayTicks({});
+          }}
+          className={`px-4 py-2 font-semibold ${
+            activeTab === "intraday"
+              ? "text-purple-600 border-b-2 border-purple-600"
+              : "text-gray-600"
+          }`}
+        >
+          Intraday Tracker
         </button>
       </div>
 
@@ -203,6 +351,137 @@ const PredictionHistory = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {activeTab === "intraday" && (
+        <div className="space-y-4">
+          <div className="bg-white p-4 rounded-lg shadow flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Tracking</span>
+              <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs">
+                {trackedSymbols.length} symbols
+              </span>
+            </div>
+            <p className="text-xs text-gray-500">
+              Last tick: {intradayUpdated ? intradayUpdated.toLocaleTimeString() : "Syncing..."}
+              {intradayRefreshing ? " • Updating" : ""}
+            </p>
+          </div>
+
+          <div className="bg-white p-5 rounded-lg shadow">
+            {intradayLoading ? (
+              <div className="text-center text-gray-500 py-10">Loading intraday tracker...</div>
+            ) : trackedSymbols.length === 0 ? (
+              <div className="text-center text-gray-500 py-10">No intraday symbols available.</div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="lg:col-span-1">
+                  <div className="border border-gray-200 rounded-lg divide-y">
+                    <div className="px-3 py-2 text-xs text-gray-500">
+                      Click a symbol to view its intraday chart
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {trackedSymbols.map((symbol) => {
+                        const points = intradayTicks[symbol] || [];
+                        const latest = points[points.length - 1];
+                        const isActive = symbol === selectedIntradaySymbol;
+                        return (
+                          <button
+                            key={symbol}
+                            type="button"
+                            onClick={() => setSelectedIntradaySymbol(symbol)}
+                            className={`w-full px-3 py-2 text-left transition ${
+                              isActive
+                                ? "bg-purple-50 text-purple-700"
+                                : "hover:bg-gray-50"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-semibold">{symbol}</p>
+                                <p className="text-xs text-gray-500">
+                                  {latest?.source || "Unknown"}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-bold">
+                                  {latest ? `$${latest.price.toFixed(2)}` : "-"}
+                                </p>
+                                <p
+                                  className={`text-xs font-semibold ${
+                                    latest?.change >= 0
+                                      ? "text-green-600"
+                                      : "text-red-600"
+                                  }`}
+                                >
+                                  {latest
+                                    ? `${latest.change >= 0 ? "+" : ""}${latest.change.toFixed(2)}%`
+                                    : "-"}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-2">
+                  <div className="border border-gray-200 rounded-lg p-3 h-80">
+                    {selectedPoints.length === 0 ? (
+                      <div className="text-center text-gray-500 py-10">
+                        No intraday data for {selectedIntradaySymbol} yet.
+                      </div>
+                    ) : (
+                      <Line
+                        data={intradayChartData}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: { display: false },
+                            tooltip: { mode: "index", intersect: false },
+                          },
+                          scales: {
+                            x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } },
+                            y: { ticks: { callback: (value) => `$${value}` } },
+                          },
+                        }}
+                      />
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                    <div className="bg-gray-50 p-3 rounded">
+                      <p className="text-xs text-gray-500">Latest</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {selectedLatest ? `$${selectedLatest.price.toFixed(2)}` : "-"}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <p className="text-xs text-gray-500">Session High</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {selectedHigh !== null ? `$${selectedHigh.toFixed(2)}` : "-"}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <p className="text-xs text-gray-500">Session Low</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {selectedLow !== null ? `$${selectedLow.toFixed(2)}` : "-"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {intradayError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg">
+              {intradayError}
+            </div>
+          )}
         </div>
       )}
 

@@ -7,6 +7,7 @@ const Navbar = () => {
     Boolean(localStorage.getItem("authToken")),
   );
   const [menuOpen, setMenuOpen] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
   useEffect(() => {
     const handleAuthChange = () => {
@@ -26,6 +27,14 @@ const Navbar = () => {
     window.dispatchEvent(new Event("auth-changed"));
     navigate("/");
     setMenuOpen(false);
+  };
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+    document.documentElement.classList.toggle("dark", nextTheme === "dark");
+    document.body.classList.toggle("dark", nextTheme === "dark");
   };
 
   const navItems = [
@@ -53,6 +62,13 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex gap-2 lg:gap-6 items-center">
+            <button
+              onClick={toggleTheme}
+              className="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition text-sm lg:text-base"
+              aria-label="Toggle dark mode"
+            >
+              {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
+            </button>
             {navItems.map((item) => (
               <Link
                 key={item.path}
@@ -113,6 +129,12 @@ const Navbar = () => {
         {/* Mobile Menu */}
         {menuOpen && (
           <div className="md:hidden pb-4 space-y-2 border-t border-gray-700 mt-4 pt-4">
+            <button
+              onClick={toggleTheme}
+              className="w-full text-left px-4 py-2 hover:bg-gray-700 rounded transition"
+            >
+              {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+            </button>
             {navItems.map((item) => (
               <Link
                 key={item.path}
