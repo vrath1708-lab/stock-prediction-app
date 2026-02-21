@@ -1,7 +1,35 @@
 import axios from "axios";
 
+const isLocalDev =
+  typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
+const defaultApiBaseUrl = isLocalDev ? "http://localhost:5000/api" : "/api";
+
+const normalizeApiBaseUrl = (url) => {
+  const sanitized = (url || "").trim().replace(/\/+$/, "");
+  if (!sanitized) {
+    return defaultApiBaseUrl;
+  }
+
+  if (sanitized.startsWith("/")) {
+    return sanitized;
+  }
+
+  try {
+    const parsed = new URL(sanitized);
+    if (!parsed.pathname || parsed.pathname === "/") {
+      return `${parsed.origin}/api`;
+    }
+  } catch (error) {
+    return sanitized;
+  }
+
+  return sanitized;
+};
+
 export const API_BASE_URL =
-  process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+  normalizeApiBaseUrl(process.env.REACT_APP_API_URL || defaultApiBaseUrl);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
