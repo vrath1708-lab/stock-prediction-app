@@ -10,7 +10,9 @@ router.get("/stream", async (req, res) => {
       .map((item) => item.trim().toLowerCase())
       .filter(Boolean),
   );
-  const symbol = req.query.symbol ? String(req.query.symbol).toUpperCase() : null;
+  const symbol = req.query.symbol
+    ? String(req.query.symbol).toUpperCase()
+    : null;
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache, no-transform");
